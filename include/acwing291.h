@@ -1,52 +1,55 @@
 #include<iostream>
+#include<vector>
 #include<cstring>
+
 using namespace std;
-
-const int N=6010;
-int happy[N];
-int h[N],e[N],ne[N],idx;
-int dp[N][2];
-int has_father[N];
-
-void add(int a,int b){
-    e[idx]=b;ne[idx]=h[a];h[a]=idx++;
-}
-
-void dfs(int u){
-    dp[u][1]=happy[u];
-    for(int i=h[u];i!=-1;i=ne[i]){
-        int j=e[i];
-        dfs(j);
-        dp[u][0]+=max(dp[j][0],dp[j][1]);
-        dp[u][1]+=dp[j][0];
-    }
-}
-
+const int N=12,M=1<<N;
+int n,m;
+long long f[N][M];
+bool st[M];
+vector<vector<int>> state(M);
 int main(){
-    int n;
-    cin>>n;
-    for(int i=1;i<=n;i++){
-        cin>>happy[i];
+    while(cin>>n>>m,n||m){
+        //筛掉所有列中奇数个0的情况
+        for(int i=0;i<(1<<n);i++){
+            int  cnt=0;
+            bool isValid=true;
+            for(int j=0;j<n;j++){
+                if((i>>j)&1){
+                    if (cnt & 1){
+                        isValid=false;
+                        break; 
+                    }
+                    cnt=0;
+                }
+                else{
+                    cnt++;
+                }
+            }
+            if (cnt & 1)  isValid = false; 
+            st[i]  = isValid;
+        }
+        
+        //筛掉相邻两列冲突的情况 j和k都是二进制表示 比如10010和01000
+        //j和k都是行 一共有2^n行
+        for(int j=0;j<(1<<n);j++){
+            state[j].clear();
+            for(int k=0;k<(1<<n);k++){
+                if((j&k)==0 && st[j|k]){
+                    state[j].push_back(k);
+                }   
+            }
+        }
+        
+        memset(f,0,sizeof(f));
+        f[0][0]=1;
+        for(int i=1;i<=m;i++){
+            for(int j=0;j<(1<<n);j++){
+                for(auto k: state[j]){
+                    f[i][j]+=f[i-1][k];
+                }
+            }
+        }
+        cout<<f[m][0]<<endl;
     }
-    memset(h,-1,sizeof(h));
-    for(int i=1;i<=n-1;i++){
-        int a,b;
-        cin>>a>>b;
-        has_father[a]=true;
-        add(b,a);
-    }
-
-    //判断父节点
-    int root = 1;
-    while(has_father[root]) root++;
-
-    dfs(root);
-    cout<<max(dp[root][0],dp[root][1]);
-
-    return 0;
-
-
 }
-
-
-
